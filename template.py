@@ -1,27 +1,50 @@
 import pandas as pd
 import numpy as np
-from templates_utils import *
+#from templates_utils import *
 import sys 
 sys.setrecursionlimit(6000)
 
 def Q1(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: [number_of_different_components, number_of_bridges, number_of_local_bridges]
+    """
     #Your code here
     return [2, 80, 112] #[nb connected components, nb bridges, nb local bridges]
 
 def Q2(dataframe):
-    #Your code here
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: Returns the total amount of triadic closures that arrise between the median timestamp of the dataframe until the last timestamp.
+    """
     return 192384 #total number of triadic closures created after the median timestamp
 
 def Q3(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: Returns a list where the element at index i represents the total number of small paths of distances i in the graph.
+    Reminder: Take into account that the graph is directed now.
+    """
     #Your code here
     return [32, 19, 32, 29, 12] #at index 0 the number of shortest paths of lenght 0, at index 1 the number of shortest paths of length 1, ...
 
 def Q4(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: (index, pagerank_value)
+    where the index represents the id of the node with the highest pagerank value and pagerank_value its associated pagerank value after convergence.
+    (we consider that we reached convergence when the sum of the updates on all nodes after one iteration of PageRank is smaller than 10^(-10))
+    Reminder: Take into account that the graph is directed now.
+    """
     #Your code here
     return [10, 0.2413] # the id of the node with the highest pagerank score, the associated pagerank value.
     #Note that we consider that we reached convergence when the sum of the updates on all nodes after one iteration of PageRank is smaller than 10^(-10)
 
 def Q5(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: the average local clustering coefficient
+    """
     #Your code here
     return 0.5555 #the average local clustering coefficient of the graph
 
