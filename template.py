@@ -10,7 +10,8 @@ def Q1(dataframe):
     Output: [number_of_different_components, number_of_bridges, number_of_local_bridges]
     """
     #Your code here
-    return [2, 80, 112] #[nb connected components, nb bridges, nb local bridges]
+    graph = network(dataframe)
+    return [num_components(graph), len(bridges(graph))]
 
 def Q2(dataframe):
     """
