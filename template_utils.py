@@ -2,6 +2,8 @@
 # a specific place is available to copy them at the end of the Inginious task.
 
 #First, import the libraries needed for your helper functions
+import networkx as nx  
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -50,103 +52,130 @@ def dfs_bridge(graph, node, visited, parent, low, bridges):
         elif neighbor != parent.get(node):
             low[node] = min(low[node], neighbor)
 
-
-def network(dataframe):
-    networkDic = {}
-    studentIDs = pd.concat([dataframe["Src"],dataframe["Dst"]]).drop_duplicates().sort_values()
-    for id in studentIDs:
-        networkDic[id] = studentContact(id, dataframe)
-    return networkDic
-
-
-
-def studentContact(id, dataframe):
-    messageReceived = dataframe.loc[dataframe["Src"] == id, "Dst"]
-    messageSent = dataframe.loc[dataframe["Dst"] == id, "Src"]
-    sentMessageContact = messageSent.drop_duplicates()
-    receivedMessageContact = messageReceived.drop_duplicates()
+def local_bridge(graph):
+    """Compute all the local bridges in a graph."""
+    visited = set()
+    bridges = set()
+    parent = {}
+    low = {}
+    dist = {}
     
-    return list(pd.concat([sentMessageContact, receivedMessageContact]).drop_duplicates())
+    def dfs_bridge(node, depth):
+        """Depth-first search traversal of a graph to find bridges and compute distance from root."""
+        visited.add(node)
+        low[node] = node
+        dist[node] = depth
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                parent[neighbor] = node
+                dfs_bridge(neighbor, depth+1)
+                low[node] = min(low[node], low[neighbor])
+                if low[neighbor] == neighbor and dist[node] < dist[neighbor]:
+                    bridges.add((node, neighbor))
+            elif neighbor != parent.get(node):
+                low[node] = min(low[node], neighbor)
+
+    for node in graph:
+        if node not in visited:
+            dfs_bridge(node, 0)
+
+    return bridges
+
+
+def plotGraph(graph):
+
+    # create an empty graph
+    G = nx.Graph()
+
+    # add edges to the graph
+    for node, neighbors in graph.items():
+        for neighbor in neighbors:
+            G.add_edge(node, neighbor)
+
+    # plot the graph
+    nx.draw(G, with_labels=True)
+    plt.show()
 
 
 
-
-# class School:
-#     def __init__(self, dataframe):
-#         self.studentIDs = pd.concat([dataframe["Src"],dataframe["Dst"]]).drop_duplicates().sort_values()
-#         self.students = []
-#         for id in self.studentIDs:
-#             self.students.append(Student(id, dataframe))
-#         self.size = len(self.students)
-
-#     def __sizeof__(self):
-#         return self.size
+class SchoolNetwork:
+    def __init__(self, dataframe):
+        self.studentIDs = pd.concat([dataframe["Src"],dataframe["Dst"]]).drop_duplicates().sort_values()
+        networkDic = {}
+        s = []
+        for id in self.studentIDs:
+            student = Student(id, dataframe)
+            s.append(student)
+            networkDic[id] = student.getContact()
+        self.network = networkDic
+        self.students = self.dataframe["Src"] == id
     
-#     def getStudents(self):
-#         return self.students
+    def getNetwork(self):
+        return self.network
 
-#     def getStudentIDs(self):
-#         return self.studentIDs
+    def getStudentIDs(self):
+        return self.studentIDs
         
 
 
-# class Student:
+class Student:
 
-#     def __init__(self, id, dataframe):
-#         self.id = id
-#         self.messageReceived = dataframe.loc[dataframe["Src"] == id, "Dst"]
-#         self.messageSent = dataframe.loc[dataframe["Dst"] == id, "Src"]
-#         self.sentMessageContact = self.messageSent.drop_duplicates()
-#         self.receivedMessageContact = self.messageReceived.drop_duplicates()
-#         self.contact = pd.concat([self.sentMessageContact, self.receivedMessageContact]).drop_duplicates()
+    def __init__(self, id, df):
+        self.id = id
+        self.dataframe = df[(df["Src"] == id) | (df["Dst"] == id)]
 
-#     def __str__(self):
-#         return str(self.id)
+    def __str__(self):
+        return "Student ID: " + str(self.id)
     
-#     def nbrOfMessagesSentTo(self, otherStudentId):
-#         """
-#             input: otherStudentId = the id of a other student
-#             output: the number of message that the student sent to the otherStudentId
-#         """
-#         return self.getMessageSent().loc[self.getMessageSent() == otherStudentId].size
+    def nbrOfMessagesSentTo(self, otherStudentId):
+        """
+            input: otherStudentId = the id of a other student
+            output: the number of message that the student sent to the otherStudentId
+        """
+        return self.messageSent().loc[self.messageSent() == otherStudentId].size
 
-#     def nbrOfMessagesReceivedFrom(self, otherStudentId):
-#         """
-#             input: otherStudentId = the id of a other student
-#             output: the number of message that the student received from the otherStudentId
-#         """
-#         return self.getMessageReceived().loc[self.getMessageReceived() == otherStudentId].size
+    def nbrOfMessagesReceivedFrom(self, otherStudentId):
+        """
+            input: otherStudentId = the id of a other student
+            output: the number of message that the student received from the otherStudentId
+        """
+        return self.messageReceived().loc[self.messageReceived() == otherStudentId].size
 
-#     def getId(self):
-#         return self.id
+    def getId(self):
+        return self.id
     
-#     def getMessageReceived(self):
-#         return self.messageReceived
+    def messageReceived(self):
+        return list(self.dataframe.loc[self.dataframe["Src"] == id, "Dst"])
     
-#     def getMessageSent(self):
-#         return self.messageSent
+    def messageSent(self):
+        return list(self.dataframe.loc[self.dataframe["Dst"] == id, "Src"])
     
-#     def getSentMessageContact(self):
-#         return self.sentTo
+    def sentMessageContact(self):
+        return list(self.messageSent(self.dataframe).drop_duplicates())
     
-#     def getReceivedMessageContact(self):
-#         return self.receivedFrom
+    def receivedMessageContact(self):
+        return list(self.messageReceived(self.dataframe).drop_duplicates())
     
-#     def getContact(self):
-#         return self.contact
+    def getContact(self):
+        return list(pd.concat([self.sentMessageContact(self.dataframe), self.receivedMessageContact(self.dataframe)]).drop_duplicates())
     
-#
+
 
 #graph = network(pd.read_csv("CollegeMsg.csv"))
 graph = {
     1: [2, 3],
-    2: [1, 3],
+    2: [1, 3, 8],
     3: [1, 2, 4],
     4: [3, 5],
     5: [4, 6],
     6: [4, 5, 7],
     7 : [6, 8],
-    8: [7]
+    8: [7, 2]
 }
-print("nbr of components: ", num_components(graph))
-print("bridges: ", bridges(graph))
+
+# print("nbr of components: ", num_components(graph))
+# print("bridges: ", bridges(graph))
+# print("local bridges", local_bridge(graph))
+# plotGraph(graph)
+
+print(Student(98, pd.read_csv("CollegeMsg.csv")).dataframe)
