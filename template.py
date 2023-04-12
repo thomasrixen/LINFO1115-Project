@@ -10,7 +10,8 @@ def Q1(dataframe):
     Output: [number_of_different_components, number_of_bridges, number_of_local_bridges]
     """
     #Your code here
-    graph = network(dataframe)
+    network = SchoolNetwork(dataframe)
+    graph = network.getNetwork()
     return [num_components(graph), len(bridges(graph))]
 
 def Q2(dataframe):

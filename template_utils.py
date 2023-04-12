@@ -108,14 +108,16 @@ class SchoolNetwork:
             s.append(student)
             networkDic[id] = student.getContact()
         self.network = networkDic
-        self.students = self.dataframe["Src"] == id
+        self.students = s
     
     def getNetwork(self):
         return self.network
 
     def getStudentIDs(self):
         return self.studentIDs
-        
+    
+    def getStudents(self):
+        return self.students
 
 
 class Student:
@@ -145,19 +147,19 @@ class Student:
         return self.id
     
     def messageReceived(self):
-        return list(self.dataframe.loc[self.dataframe["Src"] == id, "Dst"])
+        return self.dataframe.loc[self.dataframe["Src"] == self.id, "Dst"]
     
     def messageSent(self):
-        return list(self.dataframe.loc[self.dataframe["Dst"] == id, "Src"])
+        return self.dataframe.loc[self.dataframe["Dst"] == self.id, "Src"]
     
     def sentMessageContact(self):
-        return list(self.messageSent(self.dataframe).drop_duplicates())
+        return self.messageSent().drop_duplicates()
     
     def receivedMessageContact(self):
-        return list(self.messageReceived(self.dataframe).drop_duplicates())
+        return self.messageReceived().drop_duplicates()
     
     def getContact(self):
-        return list(pd.concat([self.sentMessageContact(self.dataframe), self.receivedMessageContact(self.dataframe)]).drop_duplicates())
+        return list(pd.concat([self.sentMessageContact(), self.receivedMessageContact()]).drop_duplicates())
     
 
 
@@ -178,4 +180,5 @@ graph = {
 # print("local bridges", local_bridge(graph))
 # plotGraph(graph)
 
-print(Student(98, pd.read_csv("CollegeMsg.csv")).dataframe)
+# school = SchoolNetwork(pd.read_csv("CollegeMsg.csv"))
+# print(school.getNetwork())
