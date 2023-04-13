@@ -81,6 +81,12 @@ def local_bridge(graph):
 
     return bridges
 
+def triadicClosure(graph, student1, student2):
+    for friend1 in graph[student1]:
+        if friend1 in graph[student2]:
+            return True
+    return False
+
 
 def plotGraph(graph):
 
@@ -178,7 +184,8 @@ graph = {
 # print("nbr of components: ", num_components(graph))
 # print("bridges: ", bridges(graph))
 # print("local bridges", local_bridge(graph))
-# plotGraph(graph)
+print(triadicClosure(graph, 8, 7))
+plotGraph(graph)
 
 # school = SchoolNetwork(pd.read_csv("CollegeMsg.csv"))
 # print(school.getNetwork())
