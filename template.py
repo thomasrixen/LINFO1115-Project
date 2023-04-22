@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from template_utils import *
+import matplotlib.pyplot as plt
 import sys 
 sys.setrecursionlimit(6000)
 
@@ -10,8 +11,8 @@ def Q1(dataframe):
     Output: [number_of_different_components, number_of_bridges, number_of_local_bridges]
     """
     #Your code here
-    network = SchoolNetwork(dataframe)
-    graph = network.getNetwork()
+    schoolNetwork = SchoolNetwork(dataframe)
+    graph = schoolNetwork.getNetwork()
     return [num_components(graph), len(bridges(graph))]
 
 def Q2(dataframe):
@@ -27,8 +28,29 @@ def Q3(dataframe):
     Output: Returns a list where the element at index i represents the total number of small paths of distances i in the graph.
     Reminder: Take into account that the graph is directed now.
     """
-    #Your code here
-    return [32, 19, 32, 29, 12] #at index 0 the number of shortest paths of lenght 0, at index 1 the number of shortest paths of length 1, ...
+    schoolNetwork = SchoolNetwork(dataframe)
+    # Initialize the list of small paths with 0's
+    small_paths_list = [0] * len(graph)
+
+    # Iterate over all nodes in the graph
+    for node in schoolNetwork.getDirectedNetwork():
+        small_paths_list = bfs_small_paths(schoolNetwork.getDirectedNetwork(), node, small_paths_list)
+
+    
+    y = small_paths_list
+    x = [i for i in range(len(y))]
+    
+
+    plt.plot(x, y, 'o-', label='Data')
+    for i, j in zip(x, y):
+        plt.annotate(str(j), xy=(i, j), ha='center', va='bottom')
+    plt.xlabel('Number of Intermediaries')
+    plt.ylabel('Number of Chains')
+    plt.title('Chain Statistics')
+    plt.show()
+    return small_paths_list
+
+
 
 def Q4(dataframe):
     """

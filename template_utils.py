@@ -7,6 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+
+#############################################################################################
+#                             first question function                                       #
+#############################################################################################
+
 def num_components(graph):
     """Compute the number of components in a graph."""
     visited = set()
@@ -16,7 +21,6 @@ def num_components(graph):
             num_components += 1
             dfs(graph, node, visited)
     return num_components
-
 
 def bridges(graph):
     """Compute the bridges in a graph."""
@@ -81,6 +85,11 @@ def local_bridge(graph):
 
     return bridges
 
+
+#############################################################################################
+#                             second question function                                      #
+#############################################################################################
+
 def triadicClosure(graph, student1, student2):
     for friend1 in graph[student1]:
         if friend1 in graph[student2]:
@@ -88,6 +97,32 @@ def triadicClosure(graph, student1, student2):
     return False
 
 
+
+#############################################################################################
+#                             thirde question function                                       #
+#############################################################################################
+
+def bfs_small_paths(graph, start_node, small_paths_list):
+    # Initialize the queue with the starting node and a path of length 0
+    queue = [(start_node, 0)]
+    visited = set()
+
+    # BFS to find the small paths for the starting node
+    while queue:
+        curr_node, curr_dist = queue.pop(0)
+        if curr_node not in visited:
+            visited.add(curr_node)
+            if curr_dist > 0 and curr_dist < len(small_paths_list):
+                small_paths_list[curr_dist] += 1
+            for neighbor in graph[curr_node]:
+                queue.append((neighbor, curr_dist+1))
+
+    return small_paths_list
+
+
+#############################################################################################
+#                             debug function                                                #
+#############################################################################################
 def plotGraph(graph):
 
     # create an empty graph
@@ -102,22 +137,30 @@ def plotGraph(graph):
     nx.draw(G, with_labels=True)
     plt.show()
 
-
+#############################################################################################
+#                              Helper classes                                               #
+#############################################################################################
 
 class SchoolNetwork:
     def __init__(self, dataframe):
         self.studentIDs = pd.concat([dataframe["Src"],dataframe["Dst"]]).drop_duplicates().sort_values()
         networkDic = {}
+        directedNetworkDic = {}
         s = []
         for id in self.studentIDs:
             student = Student(id, dataframe)
             s.append(student)
             networkDic[id] = student.getContact()
+            directedNetworkDic[id] = list(student.sentMessageContact())
         self.network = networkDic
+        self.directedNetwork = directedNetworkDic
         self.students = s
     
     def getNetwork(self):
         return self.network
+    
+    def getDirectedNetwork(self):
+        return self.directedNetwork
 
     def getStudentIDs(self):
         return self.studentIDs
@@ -170,21 +213,30 @@ class Student:
 
 
 #graph = network(pd.read_csv("CollegeMsg.csv"))
+# graph = {
+#     1: [2, 3],
+#     2: [1, 3, 8],
+#     3: [1, 2, 4],
+#     4: [3, 5],
+#     5: [4, 6],
+#     6: [4, 5, 7],
+#     7 : [6, 8],
+#     8: [7, 2]
+# }
 graph = {
     1: [2, 3],
-    2: [1, 3, 8],
-    3: [1, 2, 4],
-    4: [3, 5],
-    5: [4, 6],
-    6: [4, 5, 7],
-    7 : [6, 8],
-    8: [7, 2]
-}
+    2: [8],
+    3: [4],
+    4: [5, 1],
+    5:  [6, 8],
+    6: [7, 8],
+    7 : [8],
+    8: [7]
+    }
 
 # print("nbr of components: ", num_components(graph))
 # print("bridges: ", bridges(graph))
 # print("local bridges", local_bridge(graph))
-print(triadicClosure(graph, 8, 7))
 plotGraph(graph)
 
 # school = SchoolNetwork(pd.read_csv("CollegeMsg.csv"))
