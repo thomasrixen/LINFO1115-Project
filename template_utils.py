@@ -2,6 +2,7 @@
 # a specific place is available to copy them at the end of the Inginious task.
 
 #First, import the libraries needed for your helper functions
+
 import networkx as nx  
 import matplotlib.pyplot as plt
 import numpy as np
@@ -119,6 +120,53 @@ def bfs_small_paths(graph, start_node, small_paths_list):
 
     return small_paths_list
 
+#############################################################################################
+#                             forth question function                                      #
+#############################################################################################
+def pagerank(graph, d=0.85, tol=1e-10):
+    # Initialize PageRank values
+    N = len(graph)
+    pagerank_dict = {node: 1 / N for node in graph}
+    pagerank_dict_old = pagerank_dict.copy()
+
+    # Perform iterative calculation until convergence
+    while True:
+        # Calculate PageRank for each node
+        for node in pagerank_dict:
+            B = [n for n in graph if node in graph[n]]
+            if len(B) > 0:
+                pagerank_dict[node] = (1 - d) / len(graph) + d * sum(
+                    pagerank_dict[n] / len(graph[n]) for n in B
+                )
+
+        # Check for convergence
+        max_diff = max(abs(pagerank_dict[node] - pagerank_dict_old[node]) for node in pagerank_dict)
+        if max_diff < tol:
+            break
+        pagerank_dict_old = pagerank_dict.copy()
+
+    # Return PageRank value for given student
+    return pagerank_dict
+
+#############################################################################################
+#                             fifth question function                                      #
+#############################################################################################
+def local_clustering_coefficient(graph):
+    clustering_coefficient = {}
+    for node in graph:
+        neighbors = graph[node]
+        degree = len(neighbors)
+        if degree < 2:
+            clustering_coefficient[node] = 0.0
+            continue
+        triangles = 0
+        for neighbor1 in neighbors:
+            for neighbor2 in neighbors:
+                if neighbor1 != neighbor2 and neighbor1 in graph[neighbor2]:
+                    triangles += 1
+        clustering_coefficient[node] = (2 * triangles) / (degree * (degree - 1))
+    return clustering_coefficient
+
 
 #############################################################################################
 #                             debug function                                                #
@@ -151,7 +199,7 @@ class SchoolNetwork:
             student = Student(id, dataframe)
             s.append(student)
             networkDic[id] = student.getContact()
-            directedNetworkDic[id] = list(student.sentMessageContact())
+            directedNetworkDic[id] = list(student.getSentMessageContact())
         self.network = networkDic
         self.directedNetwork = directedNetworkDic
         self.students = s
@@ -174,6 +222,11 @@ class Student:
     def __init__(self, id, df):
         self.id = id
         self.dataframe = df[(df["Src"] == id) | (df["Dst"] == id)]
+        self.messageReceived = self.dataframe.loc[self.dataframe["Src"] == self.id, "Dst"]
+        self.messageSent = self.dataframe.loc[self.dataframe["Dst"] == self.id, "Src"]
+        self.sentMessageContact = self.messageSent.drop_duplicates()
+        self.receivedMessageContact = self.messageReceived.drop_duplicates()
+        self.contact = list(pd.concat([self.sentMessageContact, self.receivedMessageContact]).drop_duplicates())
 
     def __str__(self):
         return "Student ID: " + str(self.id)
@@ -183,32 +236,32 @@ class Student:
             input: otherStudentId = the id of a other student
             output: the number of message that the student sent to the otherStudentId
         """
-        return self.messageSent().loc[self.messageSent() == otherStudentId].size
+        return self.getMessageSent().loc[self.getMessageSent() == otherStudentId].size
 
     def nbrOfMessagesReceivedFrom(self, otherStudentId):
         """
             input: otherStudentId = the id of a other student
             output: the number of message that the student received from the otherStudentId
         """
-        return self.messageReceived().loc[self.messageReceived() == otherStudentId].size
+        return self.getMessageReceived().loc[self.getMessageReceived() == otherStudentId].size
 
     def getId(self):
         return self.id
     
-    def messageReceived(self):
-        return self.dataframe.loc[self.dataframe["Src"] == self.id, "Dst"]
+    def getMessageReceived(self):
+        return self.messageReceived
     
-    def messageSent(self):
-        return self.dataframe.loc[self.dataframe["Dst"] == self.id, "Src"]
+    def getMessageSent(self):
+        return self.messageSent
     
-    def sentMessageContact(self):
-        return self.messageSent().drop_duplicates()
+    def getSentMessageContact(self):
+        return self.sentMessageContact
     
-    def receivedMessageContact(self):
-        return self.messageReceived().drop_duplicates()
+    def getReceivedMessageContact(self):
+        return self.receivedMessageContact
     
     def getContact(self):
-        return list(pd.concat([self.sentMessageContact(), self.receivedMessageContact()]).drop_duplicates())
+        return self.contact
     
 
 
@@ -237,7 +290,7 @@ graph = {
 # print("nbr of components: ", num_components(graph))
 # print("bridges: ", bridges(graph))
 # print("local bridges", local_bridge(graph))
-plotGraph(graph)
+#plotGraph(graph)
 
 # school = SchoolNetwork(pd.read_csv("CollegeMsg.csv"))
 # print(school.getNetwork())

@@ -60,8 +60,22 @@ def Q4(dataframe):
     (we consider that we reached convergence when the sum of the updates on all nodes after one iteration of PageRank is smaller than 10^(-10))
     Reminder: Take into account that the graph is directed now.
     """
+    schoolNetwork = SchoolNetwork(dataframe)
+    directedNetwork = schoolNetwork.getDirectedNetwork()
+    pagerank_value = pagerank(directedNetwork)
+    maxId = -1
+    maxRank = -1
+    for i in range(len(pagerank_value)):
+        if (pagerank_value[i] > maxRank):
+            maxRank = pagerank_value[i]
+            maxId = i
+            
+    return [maxId, maxRank]
+    
+     # the id of the node with the highest pagerank score, the associated pagerank value.
+
     #Your code here
-    return [10, 0.2413] # the id of the node with the highest pagerank score, the associated pagerank value.
+    
     #Note that we consider that we reached convergence when the sum of the updates on all nodes after one iteration of PageRank is smaller than 10^(-10)
 
 def Q5(dataframe):
@@ -69,8 +83,15 @@ def Q5(dataframe):
     Input: Pandas dataframe as described above representing a graph
     Output: the average local clustering coefficient
     """
+    schoolNetwork = SchoolNetwork(dataframe)
+    graph = schoolNetwork.getNetwork()
+    lcc = local_clustering_coefficient(graph)
+    sum = 0
+    for i in range(len(lcc)):
+        sum += lcc[i]
+
     #Your code here
-    return 0.5555 #the average local clustering coefficient of the graph
+    return sum/len(lcc) #the average local clustering coefficient of the graph
 
 #you can write additionnal functions that can be used in Q1-Q5 functions in the file "template_utils.py", a specific place is available to copy them at the end of the Inginious task.
 
