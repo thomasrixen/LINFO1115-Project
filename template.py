@@ -1,4 +1,5 @@
 import pandas as pd
+import math
 import numpy as np
 from template_utils import *
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ def Q1(dataframe):
     #Your code here
     schoolNetwork = SchoolNetwork(dataframe)
     graph = schoolNetwork.getNetwork()
-    return [num_components(graph), len(bridges(graph))]
+    return [num_components(graph), len(bridges(graph)), count_local_bridges(graph)]
 
 def Q2(dataframe):
     """
@@ -46,7 +47,7 @@ def Q3(dataframe):
         plt.annotate(str(j), xy=(i, j), ha='center', va='bottom')
     plt.xlabel('Number of Intermediaries')
     plt.ylabel('Number of Chains')
-    plt.title('Chain Statistics')
+    plt.title('Graph Q3')
     plt.show()
     return small_paths_list
 
@@ -64,13 +65,18 @@ def Q4(dataframe):
     directedNetwork = schoolNetwork.getDirectedNetwork()
     pagerank_value = pagerank(directedNetwork)
     maxId = -1
+    lowId = -1
     maxRank = -1
+    lowRank = -2
     for i in range(len(pagerank_value)):
         if (pagerank_value[i] > maxRank):
             maxRank = pagerank_value[i]
             maxId = i
+        if (pagerank_value[i] < lowRank):
+            lowRank = pagerank_value[i]
+            lowId = i
             
-    return [maxId, maxRank]
+    return [(maxId, maxRank), (lowId, lowRank)]
     
      # the id of the node with the highest pagerank score, the associated pagerank value.
 
@@ -96,8 +102,10 @@ def Q5(dataframe):
 #you can write additionnal functions that can be used in Q1-Q5 functions in the file "template_utils.py", a specific place is available to copy them at the end of the Inginious task.
 
 df = pd.read_csv('CollegeMsg.csv')
-print(Q1(df))
-print(Q2(df))
-print(Q3(df))
-print(Q4(df))
-print(Q5(df))
+#print(Q1(df))
+# print(Q2(df))
+# print(Q3(df))
+# print(Q4(df))
+# print(Q5(df))
+
+bfs_nodes_path()

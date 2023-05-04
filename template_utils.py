@@ -57,34 +57,58 @@ def dfs_bridge(graph, node, visited, parent, low, bridges):
         elif neighbor != parent.get(node):
             low[node] = min(low[node], neighbor)
 
-def local_bridge(graph):
-    """Compute all the local bridges in a graph."""
-    visited = set()
-    bridges = set()
-    parent = {}
-    low = {}
-    dist = {}
-    
-    def dfs_bridge(node, depth):
-        """Depth-first search traversal of a graph to find bridges and compute distance from root."""
-        visited.add(node)
-        low[node] = node
-        dist[node] = depth
-        for neighbor in graph[node]:
+def count_local_bridges(graph):
+    """
+    Computes the number of local bridges in a graph represented as a dictionary.
+    """
+    count = 0
+
+    for node, neighbors in graph.items():
+        for neighbor in neighbors:
+            if neighbor < node:
+                continue
+            if len(set(graph[node]) & set(graph[neighbor])) == 0:
+                distance_before = 1
+                graph[node].remove(neighbor)
+                graph[neighbor].remove(node)
+                short_path = bfs_nodes_path(graph, node, neighbors)
+                if short_path != None:
+                    distance_after = bfs_nodes_path(graph, node, neighbors)
+                    graph[node].append(neighbor)
+                    graph[neighbor].append(node)
+                    if distance_after > distance_before + 2:
+                        count += 1
+                        print("after: ", distance_after, "before: ", distance_before)
+                        print("count: ", count)
+
+    return count
+
+
+def bfs_nodes_path(graph, start, end):
+    """
+    Finds the shortest path between two nodes in a graph using BFS.
+    """
+    # Initialize the queue with the start node and the visited set with the start node
+    queue = [(start, [start])]
+    visited = {start}
+
+    # Loop until the queue is empty
+    while queue:
+        # Dequeue the next node and its path from the queue
+        current_node, path = queue.pop(0)
+
+        # Check if we've reached the end node
+        if current_node == end:
+            return path
+
+        # Enqueue the neighbors of the current node that haven't been visited yet
+        for neighbor in graph[current_node]:
             if neighbor not in visited:
-                parent[neighbor] = node
-                dfs_bridge(neighbor, depth+1)
-                low[node] = min(low[node], low[neighbor])
-                if low[neighbor] == neighbor and dist[node] < dist[neighbor]:
-                    bridges.add((node, neighbor))
-            elif neighbor != parent.get(node):
-                low[node] = min(low[node], neighbor)
+                visited.add(neighbor)
+                queue.append((neighbor, path + [neighbor]))
 
-    for node in graph:
-        if node not in visited:
-            dfs_bridge(node, 0)
-
-    return bridges
+    # If we reach this point, there's no path between the start and end nodes
+    return None
 
 
 #############################################################################################
@@ -144,7 +168,16 @@ def pagerank(graph, d=0.85, tol=1e-10):
         if max_diff < tol:
             break
         pagerank_dict_old = pagerank_dict.copy()
-
+    counter = 0
+    counter2 = 0
+    for i in pagerank_dict.values():
+        counter+= i
+    for i in range(len(pagerank_dict)):
+        pagerank_dict[i] /= counter
+    for i in pagerank_dict.values():
+        counter2 += i
+    print(pagerank_dict)
+    print(counter2)
     # Return PageRank value for given student
     return pagerank_dict
 
@@ -277,15 +310,18 @@ class Student:
 #     8: [7, 2]
 # }
 graph = {
-    1: [2, 3],
-    2: [8],
+    1: [3, 4],
+    2: [8, 1],
     3: [4],
     4: [5, 1],
-    5:  [6, 8],
+    5:  [6],
     6: [7, 8],
-    7 : [8],
+    7 : [6],
     8: [7]
     }
+print(bfs_nodes_path(graph, 2, 4))
+plotGraph(graph)
+
 
 # print("nbr of components: ", num_components(graph))
 # print("bridges: ", bridges(graph))
