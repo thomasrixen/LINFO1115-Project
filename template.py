@@ -23,7 +23,8 @@ def Q2(dataframe):
     Output: Returns the total amount of triadic closures that arrise between the median timestamp of the dataframe until the last timestamp.
     """
     print("Q2...")
-    return 192384 #total number of triadic closures created after the median timestamp
+    schoolNetwork = SchoolNetwork(dataframe)
+    return count_triadic_closures(schoolNetwork.getLastMessage())
 
 def Q3(dataframe):
     """
@@ -103,10 +104,8 @@ def Q5(dataframe):
 #you can write additionnal functions that can be used in Q1-Q5 functions in the file "template_utils.py", a specific place is available to copy them at the end of the Inginious task.
 
 df = pd.read_csv('CollegeMsg.csv')
-print(Q1(df))
-print(Q2(df))
-print(Q3(df))
+# print(Q1(df))
+# print(Q2(df))
+# print(Q3(df))
 print(Q4(df))
-print(Q5(df))
-
-
+# print(Q5(df))

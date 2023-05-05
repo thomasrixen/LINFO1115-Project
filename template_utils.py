@@ -123,6 +123,102 @@ def triadicClosure(graph, student1, student2):
             return True
     return False
 
+def TriadicClosureOverTime(graph):
+    df = pd.read_csv(csvfile)
+
+
+    #df.sort_values("Time", inplace=True)
+
+    triads = []
+    for i, row in df.iterrows():
+        # Check if the current edge forms a triad with any of the previous edges
+        for j in range(i - 1, -1, -1):
+            if df.loc[j, 'Time'] < row['Time']:
+                if df.loc[j, 'Src'] == row['Src'] and df.loc[j, 'Dst'] in df.loc[:i - 1, 'Src'].values:
+                    triads.append(row['Time'])
+                    break
+                elif df.loc[j, 'Dst'] == row['Dst'] and df.loc[:i - 1, 'Src'].isin(
+                        [df.loc[j, 'Src'], row['Src']]).sum() == 2:
+                    triads.append(row['Time'])
+                    break
+
+    # Compute the number of triadic closures between the median timestamp and the end
+    median_time = df["Time"].median()
+    num_triads_after_median = sum([1 for t in triads if t >= median_time])
+    # Compute the accumulated number of triadic closures over time
+    accumulated_triads = [0]
+    for i, row in df.iterrows():
+        num_triads = sum([1 for t in triads if t <= row['Time']])
+        accumulated_triads.append(accumulated_triads[-1] + num_triads)
+
+    # Plot the evolution of triadic closures over time
+    #fig, ax = plt.subplots()
+    #ax.plot(df['Time'], accumulated_triads[1:])
+    #ax.set_xlabel('Time')
+    #ax.set_ylabel('Accumulated Triadic Closures')
+    #plt.show()
+    return num_triads_after_median
+
+
+def count_triadic_closures(last_messages_df):
+    # Compute the median timestamp
+    median_time = last_messages_df['Time'].median()
+
+    # Filter the DataFrame to include only messages sent after the median timestamp
+    filtered_df = last_messages_df[last_messages_df['Time'] >= median_time]
+
+    # Create a dictionary to store the nodes and their neighbors
+    nodes = {}
+    for index, row in filtered_df.iterrows():
+        sender, receiver = row['Src'], row['Dst']
+        if sender not in nodes:
+            nodes[sender] = set()
+        if receiver not in nodes:
+            nodes[receiver] = set()
+        nodes[sender].add(receiver)
+        nodes[receiver].add(sender)
+
+    # Compute the number of triadic closures that have appeared between the median timestamp and the end
+    count = 0
+    for node in nodes:
+        neighbors = nodes[node]
+        for neighbor in neighbors:
+            for neighbor2 in neighbors:
+                if neighbor != neighbor2 and neighbor2 in nodes[neighbor]:
+                    count += 1
+    return count
+
+# Plot the accumulated number of triadic closures over time
+def plot_triadic_closures(last_messages_df):
+    # Sort the DataFrame by timestamp in ascending order
+    sorted_df = last_messages_df.sort_values('Time', ascending=True)
+
+    # Create an empty list to store the accumulated number of triadic closures
+    counts = []
+
+    # Iterate over the messages in the DataFrame and compute the number of triadic closures after each message
+    for i in range(len(sorted_df)):
+        # Compute the number of triadic closures after the i-th message
+        count = count_triadic_closures(sorted_df.iloc[:i+1])
+        print(count)
+        # Add the count to the list of accumulated counts
+        counts.append(count)
+
+    # Plot the accumulated number of triadic closures over time
+    plt.plot(sorted_df['Time'], counts)
+    plt.xlabel('Time')
+    plt.ylabel('Number of triadic closures')
+    plt.show()
+
+
+def count_triadic_closures_networkx(last_messages_df):
+    # Create a graph using the edges in the DataFrame
+    graph = nx.from_pandas_edgelist(last_messages_df, 'Src', 'Dst', create_using=nx.Graph())
+
+    # Compute the number of triadic closures in the graph
+    triads = sum(nx.triangles(graph).values()) / 3
+
+    return triads
 
 
 #############################################################################################
@@ -176,9 +272,9 @@ def pagerank(graph, d=0.85, tol=1e-10):
         counter+= i
     for i in range(len(pagerank_dict)):
         pagerank_dict[i] /= counter
-    for i in pagerank_dict.values():
-        counter2 += i
-    # print(pagerank_dict)
+    # for i in pagerank_dict.values():
+    #     counter2 += i
+    # # print(pagerank_dict)
     # print(counter2)
     # Return PageRank value for given student
     return pagerank_dict
@@ -238,6 +334,12 @@ class SchoolNetwork:
         self.network = networkDic
         self.directedNetwork = directedNetworkDic
         self.students = s
+        last_messages = {}
+        for index, row in dataframe.iterrows():
+            sender, receiver, timestamp = row['Src'], row['Dst'], row['Time']
+            if (sender, receiver) not in last_messages and (receiver, sender) not in last_messages:
+                last_messages[(sender, receiver)] = row
+        self.last_messages_df = pd.DataFrame(last_messages.values(), columns=['Src', 'Dst', 'Time'])
     
     def getNetwork(self):
         return self.network
@@ -250,6 +352,9 @@ class SchoolNetwork:
     
     def getStudents(self):
         return self.students
+    
+    def getLastMessage(self):
+        return self.last_messages_df
 
 
 class Student:
