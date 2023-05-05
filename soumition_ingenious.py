@@ -1,12 +1,81 @@
-#if needed, write here your additional fuctions/classes with their signature and use them in the exercices:
-# a specific place is available to copy them at the end of the Inginious task.
-
-#First, import the libraries needed for your helper functions
-
-import networkx as nx  
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
+from template_utils import *
+import matplotlib.pyplot as plt
+
+def Q1(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: [number_of_different_components, number_of_bridges, number_of_local_bridges]
+    """
+    print("Q1...")
+    #Your code here
+    schoolNetwork = SchoolNetwork(dataframe)
+    graph = schoolNetwork.getNetwork()
+    return [num_components(graph), len(bridges(graph)), count_local_bridges(graph)]
+
+def Q2(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: Returns the total amount of triadic closures that arrise between the median timestamp of the dataframe until the last timestamp.
+    """
+    print("Q2...")
+    schoolNetwork = SchoolNetwork(dataframe)
+    return count_triadic_closures(schoolNetwork.getLastMessage())
+
+def Q3(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: Returns a list where the element at index i represents the total number of small paths of distances i in the graph.
+    Reminder: Take into account that the graph is directed now.
+    """
+    print("Q3...")
+    schoolNetwork = SchoolNetwork(dataframe)
+    graph = schoolNetwork.getDirectedNetwork()
+    # Initialize the list of small paths with 0's
+    small_paths_list = [0] * 10
+
+    # Iterate over all nodes in the graph
+    for node in graph:
+        small_paths_list = bfs_small_paths(graph, node, small_paths_list)
+
+    return small_paths_list
+
+
+
+def Q4(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: (index, pagerank_value)
+    where the index represents the id of the node with the highest pagerank value and pagerank_value its associated pagerank value after convergence.
+    (we consider that we reached convergence when the sum of the updates on all nodes after one iteration of PageRank is smaller than 10^(-10))
+    Reminder: Take into account that the graph is directed now.
+    """
+    print("Q4...")
+    schoolNetwork = SchoolNetwork(dataframe)
+    directedNetwork = schoolNetwork.getDirectedNetwork()
+    pagerank_value = pagerank(directedNetwork)
+    maxId = -1
+    maxRank = -1
+    for i in range(len(pagerank_value)):
+        if (pagerank_value[i] > maxRank):
+            maxRank = pagerank_value[i]
+            maxId = i
+                
+    return (maxId, maxRank)
+
+def Q5(dataframe):
+    """
+    Input: Pandas dataframe as described above representing a graph
+    Output: the average local clustering coefficient
+    """
+    print("Q5...")
+    schoolNetwork = SchoolNetwork(dataframe)
+    graph = schoolNetwork.getNetwork()
+    lcc = local_clustering_coefficient(graph)
+    sum = 0
+    for i in range(len(lcc)):
+        sum += lcc[i]
+    return sum/len(lcc)
 
 
 #############################################################################################
@@ -90,22 +159,18 @@ def count_local_bridges(graph):
     count = 0
 
     for node, neighbors in graph.items():
-        #print(node, neighbors)
         for neighbor in neighbors:
             graph[node].remove(neighbor)
             graph[neighbor].remove(node)
             short_path = bfs_nodes_path(graph, node, neighbor)
-            #print("short path (", node, "," , neighbor , ")= ", short_path)
             if short_path == None:
                 graph[node].append(neighbor)
                 graph[neighbor].append(node)
-                #print(node, " and ", neighbor, " can not be reach after removing the edge in between them")
                 count += 1
             else:
                 distance_after = len(short_path)-1
                 graph[node].append(neighbor)
                 graph[neighbor].append(node)
-                #print("distance after removing the edge between ", node, " and ", neighbor, " is ", distance_after)
                 if distance_after > 2:
                     count += 1
 
@@ -116,50 +181,6 @@ def count_local_bridges(graph):
 #############################################################################################
 #                             second question function                                      #
 #############################################################################################
-
-def triadicClosure(graph, student1, student2):
-    for friend1 in graph[student1]:
-        if friend1 in graph[student2]:
-            return True
-    return False
-
-def TriadicClosureOverTime(graph):
-    df = pd.read_csv(csvfile)
-
-
-    #df.sort_values("Time", inplace=True)
-
-    triads = []
-    for i, row in df.iterrows():
-        # Check if the current edge forms a triad with any of the previous edges
-        for j in range(i - 1, -1, -1):
-            if df.loc[j, 'Time'] < row['Time']:
-                if df.loc[j, 'Src'] == row['Src'] and df.loc[j, 'Dst'] in df.loc[:i - 1, 'Src'].values:
-                    triads.append(row['Time'])
-                    break
-                elif df.loc[j, 'Dst'] == row['Dst'] and df.loc[:i - 1, 'Src'].isin(
-                        [df.loc[j, 'Src'], row['Src']]).sum() == 2:
-                    triads.append(row['Time'])
-                    break
-
-    # Compute the number of triadic closures between the median timestamp and the end
-    median_time = df["Time"].median()
-    num_triads_after_median = sum([1 for t in triads if t >= median_time])
-    # Compute the accumulated number of triadic closures over time
-    accumulated_triads = [0]
-    for i, row in df.iterrows():
-        num_triads = sum([1 for t in triads if t <= row['Time']])
-        accumulated_triads.append(accumulated_triads[-1] + num_triads)
-
-    # Plot the evolution of triadic closures over time
-    #fig, ax = plt.subplots()
-    #ax.plot(df['Time'], accumulated_triads[1:])
-    #ax.set_xlabel('Time')
-    #ax.set_ylabel('Accumulated Triadic Closures')
-    #plt.show()
-    return num_triads_after_median
-
-
 def count_triadic_closures(last_messages_df):
     # Compute the median timestamp
     median_time = last_messages_df['Time'].median()
@@ -209,19 +230,8 @@ def plot_triadic_closures(last_messages_df):
     plt.xlabel('Time')
     plt.ylabel('Number of triadic closures')
     plt.show()
-
-
-def count_triadic_closures_networkx(last_messages_df):
-    # Create a graph using the edges in the DataFrame
-    graph = nx.from_pandas_edgelist(last_messages_df, 'Src', 'Dst', create_using=nx.Graph())
-
-    # Compute the number of triadic closures in the graph
-    triads = sum(nx.triangles(graph).values()) / 3
-
-    return triads
-
-
-#############################################################################################
+    
+    #############################################################################################
 #                             thirde question function                                       #
 #############################################################################################
 
@@ -241,19 +251,6 @@ def bfs_small_paths(graph, start_node, small_paths_list):
                 queue.append((neighbor, curr_dist+1))
 
     return small_paths_list
-
-def plot_path_lengh(small_paths_list):
-    y = small_paths_list
-    x = [i for i in range(len(y))]
-    
-
-    plt.plot(x, y, 'o-', label='Data')
-    for i, j in zip(x, y):
-        plt.annotate(str(j), xy=(i, j), ha='center', va='bottom')
-    plt.xlabel('Number of Intermediaries')
-    plt.ylabel('Number of Chains')
-    plt.title('Graph Q3')
-    plt.show()
 
 #############################################################################################
 #                             forth question function                                      #
@@ -285,11 +282,7 @@ def pagerank(graph, d=0.85, tol=1e-10):
         counter+= i
     for i in range(len(pagerank_dict)):
         pagerank_dict[i] /= counter
-    # for i in pagerank_dict.values():
-    #     counter2 += i
-    # # print(pagerank_dict)
-    # print(counter2)
-    # Return PageRank value for given student
+
     return pagerank_dict
 
 #############################################################################################
@@ -310,24 +303,6 @@ def local_clustering_coefficient(graph):
                     triangles += 1
         clustering_coefficient[node] = (2 * triangles) / (degree * (degree - 1))
     return clustering_coefficient
-
-
-#############################################################################################
-#                             debug function                                                #
-#############################################################################################
-def plotGraph(graph):
-
-    # create an empty graph
-    G = nx.Graph()
-
-    # add edges to the graph
-    for node, neighbors in graph.items():
-        for neighbor in neighbors:
-            G.add_edge(node, neighbor)
-
-    # plot the graph
-    nx.draw(G, with_labels=True)
-    plt.show()
 
 #############################################################################################
 #                              Helper classes                                               #
@@ -416,3 +391,9 @@ class Student:
     def getContact(self):
         return self.contact
     
+df = pd.read_csv('CollegeMsg.csv')
+print(Q1(df))
+print(Q2(df))
+print(Q3(df))
+print(Q4(df))
+print(Q5(df))
