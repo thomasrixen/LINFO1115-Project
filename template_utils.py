@@ -56,34 +56,6 @@ def dfs_bridge(graph, node, visited, parent, low, bridges):
                 bridges.add((node, neighbor))
         elif neighbor != parent.get(node):
             low[node] = min(low[node], neighbor)
-
-def count_local_bridges(graph):
-    """
-    Computes the number of local bridges in a graph represented as a dictionary.
-    """
-    count = 0
-
-    for node, neighbors in graph.items():
-        for neighbor in neighbors:
-            if neighbor < node:
-                continue
-            if len(set(graph[node]) & set(graph[neighbor])) == 0:
-                distance_before = 1
-                graph[node].remove(neighbor)
-                graph[neighbor].remove(node)
-                short_path = bfs_nodes_path(graph, node, neighbors)
-                if short_path != None:
-                    distance_after = bfs_nodes_path(graph, node, neighbors)
-                    graph[node].append(neighbor)
-                    graph[neighbor].append(node)
-                    if distance_after > distance_before + 2:
-                        count += 1
-                        print("after: ", distance_after, "before: ", distance_before)
-                        print("count: ", count)
-
-    return count
-
-
 def bfs_nodes_path(graph, start, end):
     """
     Finds the shortest path between two nodes in a graph using BFS.
@@ -109,6 +81,36 @@ def bfs_nodes_path(graph, start, end):
 
     # If we reach this point, there's no path between the start and end nodes
     return None
+
+
+def count_local_bridges(graph):
+    """
+    Computes the number of local bridges in a graph represented as a dictionary.
+    """
+    count = 0
+
+    for node, neighbors in graph.items():
+        #print(node, neighbors)
+        for neighbor in neighbors:
+            graph[node].remove(neighbor)
+            graph[neighbor].remove(node)
+            short_path = bfs_nodes_path(graph, node, neighbor)
+            #print("short path (", node, "," , neighbor , ")= ", short_path)
+            if short_path == None:
+                graph[node].append(neighbor)
+                graph[neighbor].append(node)
+                #print(node, " and ", neighbor, " can not be reach after removing the edge in between them")
+                count += 1
+            else:
+                distance_after = len(short_path)-1
+                graph[node].append(neighbor)
+                graph[neighbor].append(node)
+                #print("distance after removing the edge between ", node, " and ", neighbor, " is ", distance_after)
+                if distance_after > 2:
+                    count += 1
+
+    return count//2
+
 
 
 #############################################################################################
@@ -176,8 +178,8 @@ def pagerank(graph, d=0.85, tol=1e-10):
         pagerank_dict[i] /= counter
     for i in pagerank_dict.values():
         counter2 += i
-    print(pagerank_dict)
-    print(counter2)
+    # print(pagerank_dict)
+    # print(counter2)
     # Return PageRank value for given student
     return pagerank_dict
 
@@ -309,18 +311,19 @@ class Student:
 #     7 : [6, 8],
 #     8: [7, 2]
 # }
-graph = {
-    1: [3, 4],
-    2: [8, 1],
-    3: [4],
-    4: [5, 1],
-    5:  [6],
-    6: [7, 8],
-    7 : [6],
-    8: [7]
-    }
-print(bfs_nodes_path(graph, 2, 4))
-plotGraph(graph)
+# graph = {
+#     1: [2, 3, 4],
+#     2: [8, 1],
+#     3: [4, 1],
+#     4: [3, 5, 1],
+#     5:  [6, 4],
+#     6: [5, 7, 8],
+#     7 : [6],
+#     8: [6, 2]
+#     }
+# print(bfs_nodes_path(graph, 1, 2))
+# print(count_local_bridges(graph))
+#plotGraph(graph)
 
 
 # print("nbr of components: ", num_components(graph))
